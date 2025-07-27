@@ -21,7 +21,8 @@ import {
   Stack,
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { db } from '../firebase';
+import { db, functions } from '../firebase';
+import { httpsCallable } from 'firebase/functions';
 import { useAuth } from '../contexts/AuthContext';
 import { Task, taskConverter } from '../../shared/task';
 import { Board, boardConverter } from '../../shared/board';
@@ -59,11 +60,10 @@ export const DashboardPage = () => {
         return;
       }
 
-      const newBoard = new Board('', 'My Board', user.uid, new Date());
-      const docRef = await addDoc(boardsRef, newBoard);
-      setBoard(
-        new Board(docRef.id, newBoard.title, newBoard.ownerUid, newBoard.created),
-      );
+      const createBoard = httpsCallable<{ title: string }, { id: string }>(functions, 'createBoard');
+      const result = await createBoard({ title: 'My Board' });
+      const id = result.data.id;
+      setBoard(new Board(id, 'My Board', user.uid, new Date()));
     })();
   }, [user]);
 
