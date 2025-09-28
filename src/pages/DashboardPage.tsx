@@ -21,8 +21,7 @@ import {
   Stack,
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { db, functions } from '../firebase';
-import { httpsCallable } from 'firebase/functions';
+import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Task, taskConverter } from '../../shared/task';
 import { Board, boardConverter } from '../../shared/board';
@@ -60,10 +59,14 @@ export const DashboardPage = () => {
         return;
       }
 
-      const createBoard = httpsCallable<{ title: string }, { id: string }>(functions, 'createBoard');
-      const result = await createBoard({ title: 'My Board' });
-      const id = result.data.id;
-      setBoard(new Board(id, 'My Board', user.uid, new Date()));
+      // Create board directly in Firestore (without converter for creation)
+      const boardData = {
+        title: 'My Board',
+        ownerUid: user.uid,
+        created: new Date(),
+      };
+      const docRef = await addDoc(collection(db, 'boards'), boardData);
+      setBoard(new Board(docRef.id, 'My Board', user.uid, new Date()));
     })();
   }, [user]);
 
